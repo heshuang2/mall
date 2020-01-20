@@ -19,10 +19,10 @@ FastClick.attach(document.body);
 Vue.prototype.$bus = new Vue();
 
 //安装VueLazyload插件
-Vue.use(VueLazyload, {
+/*Vue.use(VueLazyload, {
   // loading: require("./assets/img/common/placeholder.png"),
 
-});
+});*/
 
 new Vue({
 

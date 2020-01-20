@@ -39,6 +39,7 @@
       imgLoad() {
         //判断所有有图片都加载完，再传递一次事件
         if (++this.counter === this.imgLength){
+          console.log(this.imgLength);
           this.$emit("imgLoad")
         }
       }

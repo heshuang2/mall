@@ -4,14 +4,19 @@
     <div class="content">
       <tab-menu :categories="categories"
                 @selectItem="selectItem"/>
-      <scroll id="tab-content"
+      <scroll id="tab-content" :probe-type="3" @scroll="contentScroll"
                 :data="[categoryData]"
-                ref="scroll">
+              ref="scroll">
         <div>
-          <tab-content-category :subcategories="showSubcategory"/>
+          <tab-content-category :subcategories="showSubcategory" @itemImgLoad="itemImgLoad"/>
+          <tab-control :titles="['综合', '新品', '销量']"
+          @tabClick="tabClick" ref="tabControl"/>
+          <goods-list :goods="showCategoryDetail"/>
         </div>
       </scroll>
+      <back-top v-show="isShow" @click.native="backClick"/>
     </div>
+
   </div>
 </template>
 
@@ -19,48 +24,84 @@
   import NavBar from "../../components/common/navbar/NavBar";
   import TabMenu from "./childComps/TabMenu";
   import TabContentCategory from "./childComps/TabContentCategory";
+  import TabControl from "../../components/content/TabControl/TabControl";
 
   import Scroll from "../../components/common/scroll/Scroll";
 
   import {getCategory, getCategoryDetail, getSubcategory} from "../../network/category";
   import {POP, SELL, NEW} from "common/const";
+  import {backTopMixin, tabControlMixin, itemListenerMixin} from "../../common/mixin";
+  import {debounce} from "../../common/utils";
+  import GoodsList from "../../components/content/goods/GoodsList";
 
   export default {
     name: "Category",
     components: {
+      GoodsList,
+      TabControl,
       Scroll,
       TabContentCategory,
       TabMenu,
-      NavBar
+      NavBar,
     },
     created() {
       //请求分类数据
       this._getCategory();
       //监听图片加载完成
-      this.$bus.$on("imgLoad", () => {
+     /* this.$bus.$on("imgLoad", () => {
         this.$refs.scroll.refresh();
-      })
+      })*/
     },
+    mounted() {
+     /* this.newRefresh = debounce(this.$refs.scroll.refresh, 200);
+      //对监听事件进行保存
+      this.itemImgListener = () => {
+        this.newRefresh();
+        this.tabMenuOffsetTop = this.$refs.tabControl.$el.offsetTop;
+        // console.log(this.tabMenuOffsetTop);
+      };
+      //接受到itemImgLoad加载完成事件调用itemImgListener对页面进行newRefresh
+      this.$bus.$on("itemImgLoad", this.itemImgListener);*/
+    },
+    deactivated() {
+      this.$bus.$off("itemImgLoad", this.itemImgListener);
+      this.$bus.$off("itemImageLoad", this.itemImgListener);
+    },
+    mixins: [backTopMixin, tabControlMixin, itemListenerMixin],
     data() {
       return {
         categories: [],
         categoryData: {
         },
-        currentIndex: -1
+        currentIndex: -1,
+        tabMenuOffsetTop: 0
       }
     },
     computed: {
       showSubcategory() {
-        if (this.currentIndex === -1) return {}
+        if (this.currentIndex === -1) return {};
         return this.categoryData[this.currentIndex].subcategories;
+      },
+      showCategoryDetail() {
+        if (this.currentIndex === -1) return [];
+        return this.categoryData[this.currentIndex].categoryDetail[this.currentType];
       }
     },
     methods: {
+      itemImgLoad() {
+        this.newRefresh();
+        this.tabMenuOffsetTop = this.$refs.tabControl.$el.offsetTop;
+        console.log(this.tabMenuOffsetTop);
+      },
+      //backTop是否显示
+      contentScroll(position) {
+       this.isShow = -position.y > 1000;
+      },
+      //获取数据
       _getCategory(){
         getCategory().then(res => {
           // 1.获取商品分类
           this.categories = res.data.category.list;
-          console.log(this.categories);
           // 2.初始化每个子类的数据
           this.categories.forEach((item,index) => {
             this.categoryData[index] = {
@@ -82,7 +123,6 @@
         //mailKey = 3627
         const mailKey = this.categories[index].maitKey;
         getSubcategory(mailKey).then(res => {
-          console.log(res);
           this.categoryData[index].subcategories = res.data;
           this.categoryData = {...this.categoryData};
           this._getCategoryDetail(POP);
@@ -105,7 +145,6 @@
        */
       selectItem(index) {
         this._getSubcategories(index);
-        console.log(index);
       }
     }
 
@@ -129,7 +168,7 @@
     display: flex;
   }
   #tab-content {
-    height: 100vh;
+    height: calc(100vh - 49px - 44px);
     flex: 1;
   }
 </style>

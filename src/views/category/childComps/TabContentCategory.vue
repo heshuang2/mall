@@ -3,7 +3,7 @@
     <grid-view :cols="3" :lineSpace="15" :v-margin="20" v-if="subcategories">
       <div class="item" v-for="(item, index) in subcategories.list" :key="index">
         <a :href="item.link">
-          <img class="item-img" :src="item.image" alt="">
+          <img class="item-img" :src="item.image" alt="" @load="itemImgLoad">
           <div class="item-text">{{item.title}}</div>
         </a>
       </div>
@@ -17,6 +17,12 @@
   export default {
     name: "TabContentCategory",
     components: {GridView},
+    data() {
+      return {
+        counter: 0,
+        imgLength: 0
+      }
+    },
     props: {
       subcategories: {
         type: Object,
@@ -24,6 +30,19 @@
           return []
         }
       }
+    },
+    methods: {
+      itemImgLoad() {
+        // console.log("itemImgLoad");
+        this.imgLength = this.subcategories.list.length;
+        if (++this.counter === this.imgLength){
+          this.counter = 0;
+          this.$emit("itemImgLoad");
+        }
+      }
+    },
+    watch: {
+
     }
   }
 </script>
